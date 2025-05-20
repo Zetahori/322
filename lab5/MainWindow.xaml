@@ -1,0 +1,24 @@
+﻿<Window x:Class="lab5.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Калькулятор очков" Height="240" Width="300">
+    <StackPanel Margin="10" Name="mainPanel">
+        <!-- Чекбоксы с баллами -->
+        <CheckBox x:Name="csharpCheckBox" Content="C#" Tag="1000" Margin="5"/>
+        <CheckBox x:Name="javaCheckBox" Content="Java" Tag="500" Margin="5"/>
+        <CheckBox x:Name="cppCheckBox" Content="C++" Tag="450" Margin="5"/>
+        <CheckBox x:Name="pythonCheckBox" Content="Python" Tag="800" Margin="5"/>
+
+        <!-- Кнопки -->
+        <StackPanel Orientation="Horizontal" Margin="0 10">
+            <Button Content="Рассчитать" Click="CalculateButton_Click" Margin="5" Padding="10 2"/>
+            <Button Content="Сбросить" Click="ResetButton_Click" Margin="5" Padding="10 2"/>
+        </StackPanel>
+
+        <!-- Результат -->
+        <TextBlock Margin="5">
+            <Run Text="Результат: "/>
+            <Run x:Name="resultText" Text="0"/>
+        </TextBlock>
+    </StackPanel>
+</Window>
