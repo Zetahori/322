@@ -27,8 +27,8 @@ jobs:
 
       - name: Write to version file
         run: |
-          echo "Commit: ${{ steps.commit-info.outputs.sha }}" > version.txt
-          echo "Message: ${{ steps.commit-info.outputs.message }}" >> version.txt
+          echo "CashOfCommit: ${{ steps.commit-info.outputs.sha }}" > version.txt
+          echo "Version (name of commit): ${{ steps.commit-info.outputs.message }}" >> version.txt
 
       - name: Commit and push changes
         run: |
