@@ -3,7 +3,7 @@
   "WorkspaceRootPath": "C:\\Users\\Professional\\Desktop\\322\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{DB80BB92-BD0B-40E7-B493-4906144DD5CF}|lab5\\lab5.csproj|C:\\Users\\Professional\\Desktop\\322\\lab5\\mainwindow.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
+      "AbsoluteMoniker": "D:0:0:{DB80BB92-BD0B-40E7-B493-4906144DD5CF}|lab5\\lab5.csproj|c:\\users\\professional\\desktop\\322\\lab5\\mainwindow.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
       "RelativeMoniker": "D:0:0:{DB80BB92-BD0B-40E7-B493-4906144DD5CF}|lab5\\lab5.csproj|solutionrelative:lab5\\mainwindow.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}"
     },
     {
@@ -42,7 +42,8 @@
               "RelativeToolTip": "lab5\\MainWindow.xaml.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAA8AAAAQAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-05-09T04:44:33.359Z"
+              "WhenOpened": "2025-05-09T04:44:33.359Z",
+              "EditorCaption": ""
             }
           ]
         }
