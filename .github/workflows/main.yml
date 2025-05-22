@@ -1,0 +1,28 @@
+name: Update Version File
+
+on:
+  push:
+    branches: [ main ]
+    paths-ignore: [ 'version.txt' ]  # Игнорировать изменения в version.txt
+
+jobs:
+  update-version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Get latest version
+        id: version
+        run: echo "version=$(git describe --tags)" >> $GITHUB_OUTPUT
+      - name: Write version to file
+        run: echo "${{ steps.version.outputs.version }}" > version.txt
+      - name: Commit and push if changed
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+          git add version.txt
+          if git diff-index --quiet HEAD --; then
+            echo "No changes to commit."
+          else
+            git commit -m "Update version to ${{ steps.version.outputs.version }}"
+            git push
+          fi
