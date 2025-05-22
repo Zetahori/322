@@ -11,8 +11,8 @@
 
         <!-- Кнопки -->
         <StackPanel Orientation="Horizontal" Margin="0 10">
-            <Button Content="Рассчитать" Click="CalculateButton_Click" Margin="5" Padding="10 2"/>
-            <Button Content="Сбросить" Click="ResetButton_Click" Margin="5" Padding="10 2"/>
+            <Button Background="#f67"  Content="Рассчитать" Click="CalculateButton_Click" Margin="5" Padding="10 2"/>
+            <Button Background="#ff7" Content="Сбросить" Click="ResetButton_Click" Margin="5" Padding="10 2"/>
         </StackPanel>
 
         <!-- Результат -->
