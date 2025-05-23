@@ -8,3 +8,4 @@
 - запустите `InstMyApp.msi` из папки `InstMyApp`
 
 
+go test!!!
