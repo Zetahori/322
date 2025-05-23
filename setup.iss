@@ -10,7 +10,7 @@
 AppName=My Program
 AppVersion={#MyAppVersion}  ; Будет заменено при компиляции
 DefaultDirName={autopf}\My Program
-OutputDir=Output
+OutputDir=dist
 ;AppVerName={#MyAppName} {#MyAppVersion}
 AppPublisher={#MyAppPublisher}
 AppPublisherURL={#MyAppURL}
