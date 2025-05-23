@@ -26,12 +26,16 @@ jobs:
 
       - name: Build installer
         run: |
-          ISCC.exe setup.iss
-          if ($LASTEXITCODE -ne 0) {
-              # Выводим подробный лог ошибок
-              Get-Content "setup.ilg" | ForEach-Object { Write-Output $_ }
+          # Проверяем наличие EXE-файла
+          $exePath = "bin\Debug\lab5.exe"
+          if (!(Test-Path $exePath)) {
+              Write-Error "Файл $exePath не найден!"
+              Get-ChildItem -Recurse | Format-Table FullName
               exit 1
           }
+    
+          # Компилируем
+          ISCC.exe /DMyAppVersion="${{ steps.set-version.outputs.version }}" setup.iss
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
