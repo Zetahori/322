@@ -18,7 +18,7 @@ jobs:
           # Создаем папку Output
           if (!(Test-Path Output)) { New-Item -ItemType Directory -Path Output }
           # Проверяем наличие exe-файла
-          if (!(Test-Path "bin\Debug\lab5.exe") {
+          if (!(Test-Path "lab5/bin/Debug/lab5.exe") {
               Write-Error "lab5.exe not found!"
               Get-ChildItem -Recurse | Format-Table Name
               exit 1
@@ -27,7 +27,7 @@ jobs:
       - name: Build installer
         run: |
           # Проверяем наличие EXE-файла
-          $exePath = "bin\Debug\lab5.exe"
+          $exePath = "lab5/bin/Debug/lab5.exe"
           if (!(Test-Path $exePath)) {
               Write-Error "Файл $exePath не найден!"
               Get-ChildItem -Recurse | Format-Table FullName
