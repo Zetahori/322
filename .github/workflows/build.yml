@@ -1,0 +1,47 @@
+name: Build Installer
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Шаг 1: Установка Inno Setup
+      - name: Install Inno Setup
+        run: choco install innosetup -y --no-progress
+
+      # Шаг 2: Подготовка версии
+      - name: Prepare version
+        id: version
+        run: |
+          # Если version.txt существует - берем оттуда, иначе используем git tag
+          if (Test-Path version.txt) {
+              $version = Get-Content version.txt -Raw
+          } else {
+              $version = git describe --tags --abbrev=0
+              if (-not $version) { $version = "1.0.0" }
+          }
+          $version = $version.Trim()
+          echo "Using version: $version"
+          echo "version=$version" >> $GITHUB_OUTPUT
+
+      # Шаг 3: Сборка установщика (без промежуточного файла)
+      - name: Build installer
+        run: |
+          ISCC.exe /DMyAppVersion="${{ steps.version.outputs.version }}" setup.iss
+          if ($LASTEXITCODE -ne 0) {
+              Write-Error "Build failed with exit code $LASTEXITCODE"
+              exit $LASTEXITCODE
+          }
+
+      # Шаг 4: Загрузка артефакта
+      - name: Upload installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: Installer
+          path: Output\*.exe
+          retention-days: 3
