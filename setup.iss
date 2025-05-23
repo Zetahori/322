@@ -33,7 +33,7 @@ Name: "russian"; MessagesFile: "compiler:Languages\Russian.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-Source: "C:\Users\Professional\source\repos\Zetahori\322\lab5\bin\Debug\lab5.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "lab5\bin\Debug\lab5.exe"; DestDir: "{app}"; Flags: ignoreversion
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]
