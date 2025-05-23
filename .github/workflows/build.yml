@@ -13,42 +13,28 @@ jobs:
       - name: Install Inno Setup
         run: choco install innosetup -y --no-progress
 
-      - name: Set version
-        id: set-version
+      - name: Prepare build
         run: |
-          # Проверяем version.txt или используем git tag
-          if (Test-Path version.txt) {
-              $version = Get-Content version.txt -Raw
-          } else {
-              $version = git describe --tags --abbrev=0
-              if (-not $version) { $version = "1.0.0" }
-          }
-          $version = $version.Trim()
-          echo "Using version: $version"
-          echo "version=$version" >> $GITHUB_OUTPUT
-
-      - name: Verify ISS file
-        run: |
-          # Проверяем существование файла
-          if (!(Test-Path setup.iss)) {
-              Write-Error "setup.iss not found!"
+          # Создаем папку Output
+          if (!(Test-Path Output)) { New-Item -ItemType Directory -Path Output }
+          # Проверяем наличие exe-файла
+          if (!(Test-Path "lab5.exe")) {
+              Write-Error "lab5.exe not found!"
+              Get-ChildItem -Recurse | Format-Table Name
               exit 1
           }
-          # Проверяем синтаксис
-          ISCC.exe /Q /DMyAppVersion="1.0.0" setup.iss /compileonly
 
       - name: Build installer
         run: |
-          ISCC.exe /Qp /DMyAppVersion="${{ steps.set-version.outputs.version }}" setup.iss
+          ISCC.exe setup.iss
           if ($LASTEXITCODE -ne 0) {
-              # Детальный лог ошибки
+              # Выводим подробный лог ошибок
               Get-Content "setup.ilg" | ForEach-Object { Write-Output $_ }
-              exit $LASTEXITCODE
+              exit 1
           }
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: Installer
-          path: Output\*.exe
-          retention-days: 3
+          path: Output\Setup.exe
