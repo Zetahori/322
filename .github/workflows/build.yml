@@ -10,15 +10,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Шаг 1: Установка Inno Setup
       - name: Install Inno Setup
         run: choco install innosetup -y --no-progress
 
-      # Шаг 2: Подготовка версии
-      - name: Prepare version
-        id: version
+      - name: Set version
+        id: set-version
         run: |
-          # Если version.txt существует - берем оттуда, иначе используем git tag
+          # Проверяем version.txt или используем git tag
           if (Test-Path version.txt) {
               $version = Get-Content version.txt -Raw
           } else {
@@ -29,17 +27,26 @@ jobs:
           echo "Using version: $version"
           echo "version=$version" >> $GITHUB_OUTPUT
 
-      # Шаг 3: Сборка установщика (без промежуточного файла)
+      - name: Verify ISS file
+        run: |
+          # Проверяем существование файла
+          if (!(Test-Path setup.iss)) {
+              Write-Error "setup.iss not found!"
+              exit 1
+          }
+          # Проверяем синтаксис
+          ISCC.exe /Q /DMyAppVersion="1.0.0" setup.iss /compileonly
+
       - name: Build installer
         run: |
-          ISCC.exe /DMyAppVersion="${{ steps.version.outputs.version }}" setup.iss
+          ISCC.exe /Qp /DMyAppVersion="${{ steps.set-version.outputs.version }}" setup.iss
           if ($LASTEXITCODE -ne 0) {
-              Write-Error "Build failed with exit code $LASTEXITCODE"
+              # Детальный лог ошибки
+              Get-Content "setup.ilg" | ForEach-Object { Write-Output $_ }
               exit $LASTEXITCODE
           }
 
-      # Шаг 4: Загрузка артефакта
-      - name: Upload installer
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: Installer
