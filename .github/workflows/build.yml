@@ -10,68 +10,57 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Полная история для анализа коммитов
+          fetch-depth: 0
 
-      # Шаг 1: Определяем версию из сообщения коммита
+      # Шаг 1: Определение версии из коммита (чистый PowerShell)
       - name: Extract version from commit
         id: get-version
         run: |
-          # Получаем последнее сообщение коммита
-          COMMIT_MSG=$(git log -1 --pretty=%B)
-          # Извлекаем версию (формат "X.X.X")
-          VERSION=$(echo "$COMMIT_MSG" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
+          # Получаем сообщение последнего коммита
+          $commitMsg = git log -1 --pretty=%B
           
-          # Если не найдено - используем дату
-          if [ -z "$VERSION" ]; then
-              VERSION=$(date +'%Y.%m.%d')
-              echo "Warning: Using date as version"
-          fi
+          # Извлекаем версию вида X.X.X
+          if ($commitMsg -match '\d+\.\d+\.\d+') {
+              $version = $matches[0]
+          } else {
+              # Если нет версии - используем дату
+              $version = Get-Date -Format "yyyy.MM.dd"
+              Write-Output "Warning: Using date as version"
+          }
           
-          echo "Version: $VERSION"
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo $VERSION > version.txt
+          Write-Output "Version: $version"
+          echo "version=$version" >> $env:GITHUB_OUTPUT
+          Set-Content -Path version.txt -Value $version
 
       # Шаг 2: Установка Inno Setup
       - name: Install Inno Setup
         run: choco install innosetup -y --no-progress
 
-      # Шаг 3: Проверка структуры
+      # Шаг 3: Проверка структуры (PowerShell)
       - name: Verify project structure
         run: |
-          # Обязательные проверки
-          if [ ! -f "lab5/bin/Debug/lab5.exe" ]; then
-              echo "##[error] lab5.exe not found!"
-              echo "Current structure:"
-              ls -R
+          $exePath = "lab5/bin/Debug/lab5.exe"
+          if (-not (Test-Path $exePath)) {
+              Write-Error "File $exePath not found!"
+              Get-ChildItem -Recurse | Format-Table FullName
               exit 1
-          fi
+          }
 
-      # Шаг 4: Сборка установщика
-      - name: Build with exact version
+      # Шаг 4: Сборка
+      - name: Build installer
         run: |
-          ISCC.exe /O"." /F"Installer_${{ steps.get-version.outputs.version }}" ^
-                  /DMyAppVersion="${{ steps.get-version.outputs.version }}" ^
+          ISCC.exe /O"." /F"Installer_${{ steps.get-version.outputs.version }}" `
+                  /DMyAppVersion="${{ steps.get-version.outputs.version }}" `
                   setup.iss
           
-          if [ $? -ne 0 ]; then
-              echo "##[error] Build failed"
-              cat setup.ilg
+          if ($LASTEXITCODE -ne 0) {
+              Get-Content "setup.ilg" | Write-Output
               exit 1
-          fi
+          }
 
-      # Шаг 5: Публикация результата
+      # Шаг 5: Публикация
       - name: Upload installer
         uses: actions/upload-artifact@v4
         with:
           name: Installer_${{ steps.get-version.outputs.version }}
           path: Installer_${{ steps.get-version.outputs.version }}.exe
-          retention-days: 1  # Уменьшено для экономии места
-
-      # Шаг 6: Принудительное обновление версии
-      - name: Force version update
-        run: |
-          git config --global user.name "GitHub Actions"
-          git config --global user.email "actions@github.com"
-          git add version.txt
-          git commit -m "Update version to ${{ steps.get-version.outputs.version }} [CI]" || echo "No changes"
-          git push || echo "Nothing to push"
