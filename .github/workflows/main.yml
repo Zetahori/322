@@ -13,26 +13,28 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Полная история коммитов для точного определения
+          fetch-depth: 0  # Полная история коммитов
 
-      - name: Get current commit message
+      - name: Get clean commit message
         id: commit-info
         run: |
-          # Получаем точное сообщение текущего коммита
+          # Получаем только сообщение коммита (без хэша, автора и даты)
           COMMIT_MESSAGE=$(git log -1 --pretty=%B ${{ github.sha }})
-          # Удаляем переносы строк для чистого вывода
-          CLEAN_MESSAGE=$(echo "$COMMIT_MESSAGE" | tr -d '\n')
-          echo "message=${CLEAN_MESSAGE}" >> $GITHUB_OUTPUT
-          echo "sha=${GITHUB_SHA}" >> $GITHUB_OUTPUT
+          # Удаляем все переносы строк и лишние пробелы
+          CLEAN_MESSAGE=$(echo "$COMMIT_MESSAGE" | tr -d '\n' | xargs)
+          echo "message=$CLEAN_MESSAGE" >> $GITHUB_OUTPUT
 
-      - name: Write to version file
+      - name: Update version file
         run: |
-          echo "${{ steps.commit-info.outputs.message }}" >> version.txt
+          # Полностью очищаем файл
+          : > version.txt
+          # Записываем только сообщение коммита
+          echo "${{ steps.commit-info.outputs.message }}" > version.txt
 
       - name: Commit and push changes
         run: |
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
           git add version.txt
-          git commit -m "Update version info for ${{ steps.commit-info.outputs.sha }}"
+          git commit -m "Automatic version file update"
           git push
