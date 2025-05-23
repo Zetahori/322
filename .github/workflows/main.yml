@@ -30,6 +30,23 @@ jobs:
           : > version.txt
           # Записываем только сообщение коммита
           echo "${{ steps.commit-info.outputs.message }}" > version.txt
+          
+      - name: Install Inno Setup
+        run: |
+          choco install innosetup -y
+
+      - name: Build
+        run: |
+          # Читаем версию
+          $version = Get-Content "version.txt" -Raw
+          # Генерируем установщик
+          ISCC.exe /DMyAppVersion=$version setup.iss
+          
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: Installer
+          path: Output/*.exe
 
       - name: Commit and push changes
         run: |
