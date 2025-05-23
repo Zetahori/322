@@ -6,13 +6,11 @@
 #define MyAppURL "https://github.com/Zetahori/322"
 #define MyAppExeName "lab5.exe"
 
-
-#include "version_config.iss"
-
 [Setup]
-AppName=MyApp
-AppVersion={#AppVersionFromTxt}  ; ������ �� version.txt
-DefaultDirName={pf}\MyApp
+AppName=My Program
+AppVersion={#MyAppVersion}  ; Будет заменено при компиляции
+DefaultDirName={autopf}\My Program
+OutputDir=Output
 ;AppVerName={#MyAppName} {#MyAppVersion}
 AppPublisher={#MyAppPublisher}
 AppPublisherURL={#MyAppURL}
