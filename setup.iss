@@ -19,9 +19,9 @@ AppUpdatesURL={#MyAppURL}
 DisableDirPage=yes
 DefaultGroupName={#MyAppName}
 AllowNoIcons=yes
-OutputDir=C:\Users\Professional\source\repos\Zetahori\322
+OutputDir=Output
 OutputBaseFilename=setup
-SetupIconFile=C:\Users\Professional\source\repos\Zetahori\322\IMG_0490.ico
+SetupIconFile=IMG_0490.ico
 Compression=lzma
 SolidCompression=yes
 
