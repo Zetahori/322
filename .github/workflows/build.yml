@@ -18,7 +18,7 @@ jobs:
           # Создаем папку Output
           if (!(Test-Path Output)) { New-Item -ItemType Directory -Path Output }
           # Проверяем наличие exe-файла
-          if (!(Test-Path "lab5.exe")) {
+          if (!(Test-Path "bin\Debug\lab5.exe") {
               Write-Error "lab5.exe not found!"
               Get-ChildItem -Recurse | Format-Table Name
               exit 1
