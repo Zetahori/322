@@ -9,31 +9,53 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Полная история для тегов
 
+      # Шаг 1: Определяем версию
+      - name: Set version
+        id: set-version
+        run: |
+          # Если version.txt существует - берем оттуда, иначе используем git describe
+          if (Test-Path version.txt) {
+              $version = Get-Content version.txt -Raw
+          } else {
+              $version = git describe --tags --abbrev=0
+              if (-not $version) { $version = "1.0.0" }
+          }
+          $version = $version.Trim()
+          echo "Using version: $version"
+          echo "version=$version" >> $GITHUB_OUTPUT
+          # Обновляем version.txt
+          echo $version > version.txt
+
+      # Шаг 2: Установка Inno Setup
       - name: Install Inno Setup
         run: choco install innosetup -y --no-progress
 
-      - name: Prepare build
+      # Шаг 3: Проверка файлов
+      - name: Verify files
         run: |
-          # Проверяем наличие exe-файла
-          if (!(Test-Path "lab5/bin/Debug/lab5.exe")) {
-              Write-Error "lab5.exe not found!"
-              Get-ChildItem -Recurse | Format-Table Name
+          $exePath = "lab5/bin/Debug/lab5.exe"
+          if (!(Test-Path $exePath)) {
+              Write-Error "Файл $exePath не найден!"
+              Get-ChildItem -Recurse | Format-Table FullName
               exit 1
           }
 
+      # Шаг 4: Сборка
       - name: Build installer
         run: |
-          # Компилируем с сохранением в корень
-          ISCC.exe /O"." /F"Installer" /DMyAppVersion="1.0.0" setup.iss
+          ISCC.exe /O"." /F"Installer_${{ steps.set-version.outputs.version }}" /DMyAppVersion="${{ steps.set-version.outputs.version }}" setup.iss
           if ($LASTEXITCODE -ne 0) {
               Get-Content "setup.ilg" | ForEach-Object { Write-Output $_ }
               exit 1
           }
 
+      # Шаг 5: Публикация артефакта
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: Installer
-          path: Installer.exe  # Теперь файл в корне
-          retention-days: 3
+          path: Installer_${{ steps.set-version.outputs.version }}.exe
+          retention-days: 7
