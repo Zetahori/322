@@ -26,10 +26,10 @@ jobs:
 
       - name: Update version file
         run: |
-          # Создаем файл с нужным форматированием
-          echo "[Version]" > version.txt
-          echo "Number=${{ steps.commit-info.outputs.message }}" >> version.txt
-          echo "" >> version.txt  # Добавляем пустую строку в конце
+          # Полностью очищаем файл
+          : > version.txt
+          # Записываем только сообщение коммита
+          echo "${{ steps.commit-info.outputs.message }}" > version.txt
 
       - name: Commit and push changes
         run: |
