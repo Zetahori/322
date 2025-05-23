@@ -9,7 +9,7 @@ on:
 
 jobs:
   update-and-build:
-    runs-on: windows-latest  # Изменили на windows для ISCC
+    runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
         with:
@@ -19,10 +19,11 @@ jobs:
       - name: Update version file
         id: update-version
         run: |
-          # Получаем чистое сообщение коммита
-          COMMIT_MESSAGE=$(git log -1 --pretty=%B ${{ github.sha }} | tr -d '\n' | xargs)
-          echo "$COMMIT_MESSAGE" > version.txt
-          echo "Updated version.txt with: $COMMIT_MESSAGE"
+          $message = git log -1 --pretty=%B $env:GITHUB_SHA
+          $cleanMessage = $message.Trim() -replace "`n|`r", ""
+          Set-Content -Path version.txt -Value $cleanMessage
+          echo "message=$cleanMessage" >> $env:GITHUB_OUTPUT
+          echo "Updated version.txt with: $cleanMessage"
 
       # Шаг 2: Установка Inno Setup
       - name: Install Inno Setup
@@ -31,23 +32,23 @@ jobs:
       # Шаг 3: Сборка установщика
       - name: Build installer
         run: |
-          # Читаем версию из файла
           $version = Get-Content version.txt -Raw
-          # Компилируем с передачей версии
           ISCC.exe /DMyAppVersion="$version" setup.iss
+          echo "Built installer with version: $version"
 
-      # Шаг 4: Фиксация изменений version.txt
+      # Шаг 4: Фиксация изменений
       - name: Commit version update
         run: |
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
           git add version.txt
-          git commit -m "Auto-update version to ${{ steps.update-version.outputs.message }}" || echo "No changes to commit"
-          git push || echo "Nothing to push"
+          git commit -m "Auto-update version to $(Get-Content version.txt)" || exit 0
+          git push || exit 0
 
-      # Шаг 5: Публикация артефакта
-      - name: Upload artifact
-        uses: actions/upload-artifact@v3
+      # Шаг 5: Публикация артефакта (исправленная версия)
+      - name: Upload installer
+        uses: actions/upload-artifact@v4
         with:
           name: Installer
-          path: Output/*.exe  # Путь где ISCC создаёт установщик
+          path: Output/*.exe
+          retention-days: 5
