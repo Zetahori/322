@@ -15,8 +15,6 @@ jobs:
 
       - name: Prepare build
         run: |
-          # Создаем папку Output
-          if (!(Test-Path Output)) { New-Item -ItemType Directory -Path Output }
           # Проверяем наличие exe-файла
           if (!(Test-Path "lab5/bin/Debug/lab5.exe")) {
               Write-Error "lab5.exe not found!"
@@ -26,19 +24,16 @@ jobs:
 
       - name: Build installer
         run: |
-          # Проверяем наличие EXE-файла
-          $exePath = "lab5/bin/Debug/lab5.exe"
-          if (!(Test-Path $exePath)) {
-              Write-Error "Файл $exePath не найден!"
-              Get-ChildItem -Recurse | Format-Table FullName
+          # Компилируем с сохранением в корень
+          ISCC.exe /O"." /F"Installer" /DMyAppVersion="1.0.0" setup.iss
+          if ($LASTEXITCODE -ne 0) {
+              Get-Content "setup.ilg" | ForEach-Object { Write-Output $_ }
               exit 1
           }
-    
-          # Компилируем
-          ISCC.exe /DMyAppVersion="${{ steps.set-version.outputs.version }}" setup.iss
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: Installer
-          path: Output\Setup.exe
+          path: Installer.exe  # Теперь файл в корне
+          retention-days: 3
