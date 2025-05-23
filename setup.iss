@@ -19,7 +19,6 @@ AppUpdatesURL={#MyAppURL}
 DisableDirPage=yes
 DefaultGroupName={#MyAppName}
 AllowNoIcons=yes
-OutputDir=Output
 OutputBaseFilename=setup
 SetupIconFile=IMG_0490.ico
 Compression=lzma
