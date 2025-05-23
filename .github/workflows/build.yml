@@ -1,8 +1,11 @@
-name: Build and Publish Installer
+name: Build and Deploy Installer
 
 on:
   push:
     branches: [ main ]
+
+permissions:
+  contents: write  # Даем права на запись
 
 jobs:
   build:
@@ -11,18 +14,16 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          persist-credentials: true  # Для последующего push
 
-      # Шаг 1: Определяем версию из коммита
-      - name: Extract version
-        id: get-version
+      # Шаг 1: Определение версии
+      - name: Set version
+        id: set-version
         run: |
           $commitMsg = git log -1 --pretty=%B
           if ($commitMsg -match '\d+\.\d+\.\d+') {
               $version = $matches[0]
           } else {
-              $version = "1.0.0"
-              Write-Output "Warning: Using default version"
+              $version = Get-Date -Format "yyyy.MM.dd"
           }
           echo "version=$version" >> $env:GITHUB_OUTPUT
           Set-Content -Path version.txt -Value $version
@@ -31,31 +32,22 @@ jobs:
       - name: Install Inno Setup
         run: choco install innosetup -y --no-progress
 
-      # Шаг 3: Сборка установщика
+      # Шаг 3: Сборка
       - name: Build installer
         run: |
-          $installerName = "MyApp_${{ steps.get-version.outputs.version }}.exe"
-          ISCC.exe /O"." /F"$installerName" /DMyAppVersion="${{ steps.get-version.outputs.version }}" setup.iss
-          if ($LASTEXITCODE -ne 0) {
-              Get-Content "setup.ilg" | Write-Output
-              exit 1
-          }
+          $installer = "MyApp_${{ steps.set-version.outputs.version }}.exe"
+          ISCC.exe /O"." /F"$installer" /DMyAppVersion="${{ steps.set-version.outputs.version }}" setup.iss
 
-      # Шаг 4: Публикация артефакта
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
+      # Шаг 4: Публикация релиза
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
         with:
-          name: Installer
-          path: MyApp_${{ steps.get-version.outputs.version }}.exe
-
-      # Шаг 5: Коммит и пуш установщика
-      - name: Commit and push installer
-        run: |
-          $installerFile = "MyApp_${{ steps.get-version.outputs.version }}.exe"
-          
-          git config --global user.name "GitHub Actions"
-          git config --global user.email "actions@github.com"
-          
-          git add $installerFile
-          git commit -m "Add installer ${{ steps.get-version.outputs.version }} [CI]"
-          git push origin main
+          files: |
+            MyApp_${{ steps.set-version.outputs.version }}.exe
+          tag_name: v${{ steps.set-version.outputs.version }}
+          name: Version ${{ steps.set-version.outputs.version }}
+          body: |
+            Automatic release for version ${{ steps.set-version.outputs.version }}
+            - Built on: ${{ github.event.head_commit.timestamp }}
+          draft: false
+          prerelease: false
