@@ -8,71 +8,63 @@ permissions:
   contents: write
 
 jobs:
-  build-and-release:
+  build:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      # Шаг 1: Определение версии из коммита
-      - name: Extract version from commit
-        id: get-version
+      # Шаг 1: Определение версии
+      - name: Set version
+        id: set-version
         run: |
           $commitMsg = git log -1 --pretty=%B
           if ($commitMsg -match '(\d+\.\d+\.\d+)') {
               $version = $matches[0]
           } else {
-              $version = "1.0.0"
-              Write-Output "Warning: Using default version"
+              $version = Get-Date -Format "yyyy.MM.dd"
           }
           echo "version=$version" >> $env:GITHUB_OUTPUT
           Set-Content -Path version.txt -Value $version
 
-      # Шаг 2: Установка зависимостей
+      # Шаг 2: Установка Inno Setup
       - name: Install Inno Setup
         run: choco install innosetup -y --no-progress
 
-      # Шаг 3: Проверка структуры проекта
-      - name: Verify project structure
+      # Шаг 3: Подготовка папок
+      - name: Prepare directories
         run: |
-          $exePath = "lab5/bin/Debug/lab5.exe"
-          if (-not (Test-Path $exePath)) {
-              Write-Error "Файл $exePath не найден!"
-              Get-ChildItem -Recurse | Format-Table FullName
-              exit 1
-          }
+          Remove-Item -Path "dist" -Recurse -ErrorAction Ignore
+          New-Item -ItemType Directory -Path "dist" -Force
 
       # Шаг 4: Сборка установщика
       - name: Build installer
         run: |
-          # Создаем папку для артефактов
-          New-Item -ItemType Directory -Path "dist" -Force
+          $version = "${{ steps.set-version.outputs.version }}"
+          $outputName = "MyApp_$version"  # Без .exe в конце!
           
-          $version = "${{ steps.get-version.outputs.version }}"
-          $installerName = "MyApp_$version.exe"
-          
-          # Компилируем установщик
-          ISCC.exe /O"dist" /F"$installerName" /DMyAppVersion="$version" setup.iss
+          Write-Output "Building version: $version"
+          ISCC.exe /O"dist" /F"$outputName" /DMyAppVersion="$version" setup.iss
           
           # Проверяем результат
-          if (-not (Test-Path "dist\$installerName")) {
-              Write-Error "Ошибка создания установщика!"
-              Get-Content "setup.ilg" | Write-Output
+          if (-not (Test-Path "dist\$outputName.exe")) {
+              Write-Output "##[error] Installer not found!"
+              Get-ChildItem -Recurse
               exit 1
           }
 
       # Шаг 5: Создание релиза
-      - name: Create GitHub Release
+      - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            dist/MyApp_*.exe
-          tag_name: v${{ steps.get-version.outputs.version }}
-          name: "Version ${{ steps.get-version.outputs.version }}"
+            dist/*.exe
+          tag_name: v${{ steps.set-version.outputs.version }}
+          name: Version ${{ steps.set-version.outputs.version }}
           body: |
-            Автоматически собранный установщик версии ${{ steps.get-version.outputs.version }}
-            - Дата сборки: ${{ github.event.head_commit.timestamp }}
+            Автоматически собранный установщик
+            Версия: ${{ steps.set-version.outputs.version }}
+            Дата сборки: ${{ github.event.head_commit.timestamp }}
           draft: false
           prerelease: false
-          generate_release_notes: true
