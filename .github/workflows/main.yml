@@ -1,4 +1,4 @@
-name: Update Version File
+name: Update and Build
 
 permissions:
   contents: write
@@ -8,50 +8,46 @@ on:
     branches: [ main ]
 
 jobs:
-  update-version:
-    runs-on: ubuntu-latest
+  update-and-build:
+    runs-on: windows-latest  # Изменили на windows для ISCC
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Полная история коммитов
+          fetch-depth: 0
 
-      - name: Get clean commit message
-        id: commit-info
-        run: |
-          # Получаем только сообщение коммита (без хэша, автора и даты)
-          COMMIT_MESSAGE=$(git log -1 --pretty=%B ${{ github.sha }})
-          # Удаляем все переносы строк и лишние пробелы
-          CLEAN_MESSAGE=$(echo "$COMMIT_MESSAGE" | tr -d '\n' | xargs)
-          echo "message=$CLEAN_MESSAGE" >> $GITHUB_OUTPUT
-
+      # Шаг 1: Обновление version.txt
       - name: Update version file
+        id: update-version
         run: |
-          # Полностью очищаем файл
-          : > version.txt
-          # Записываем только сообщение коммита
-          echo "${{ steps.commit-info.outputs.message }}" > version.txt
-          
+          # Получаем чистое сообщение коммита
+          COMMIT_MESSAGE=$(git log -1 --pretty=%B ${{ github.sha }} | tr -d '\n' | xargs)
+          echo "$COMMIT_MESSAGE" > version.txt
+          echo "Updated version.txt with: $COMMIT_MESSAGE"
+
+      # Шаг 2: Установка Inno Setup
       - name: Install Inno Setup
-        run: |
-          choco install innosetup -y
+        run: choco install innosetup -y --no-progress
 
-      - name: Build
+      # Шаг 3: Сборка установщика
+      - name: Build installer
         run: |
-          # Читаем версию
-          $version = Get-Content "version.txt" -Raw
-          # Генерируем установщик
-          ISCC.exe /DMyAppVersion=$version setup.iss
-          
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: Installer
-          path: Output/*.exe
+          # Читаем версию из файла
+          $version = Get-Content version.txt -Raw
+          # Компилируем с передачей версии
+          ISCC.exe /DMyAppVersion="$version" setup.iss
 
-      - name: Commit and push changes
+      # Шаг 4: Фиксация изменений version.txt
+      - name: Commit version update
         run: |
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
           git add version.txt
-          git commit -m "Automatic version file update"
-          git push
+          git commit -m "Auto-update version to ${{ steps.update-version.outputs.message }}" || echo "No changes to commit"
+          git push || echo "Nothing to push"
+
+      # Шаг 5: Публикация артефакта
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: Installer
+          path: Output/*.exe  # Путь где ISCC создаёт установщик
