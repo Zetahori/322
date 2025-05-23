@@ -1,7 +1,9 @@
 {
   "ExpandedNodes": [
-    ""
+    "",
+    "\\.github",
+    "\\lab5"
   ],
-  "SelectedNode": "\\lab5.sln",
+  "SelectedNode": "\\lab5\\lab5.csproj",
   "PreviewInSolutionExplorer": false
 }
